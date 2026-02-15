@@ -23,7 +23,14 @@ export type ControlId =
   // Engine Power Supply Controls
   | 'engine-master' | 'engine-pwr-1' | 'engine-pwr-2' | 'engine-ready-1' | 'engine-ready-2'
   // Navigation Console Controls
-  | 'nav-thrust' | 'nav-vector';
+  | 'nav-thrust' | 'nav-vector'
+  // Communications Console Controls
+  | 'comms-master' | 'comms-pwr-1' | 'comms-pwr-2'
+  // Outernet Connection Toggles
+  | 'conn-satellite' | 'conn-radio' | 'conn-laser' | 'conn-quantum'
+  | 'conn-microwave' | 'conn-infrared' | 'conn-plasma' | 'conn-neural'
+  | 'conn-gravitic' | 'conn-psionic' | 'conn-temporal' | 'conn-dimensional'
+  | 'conn-subspace' | 'conn-hyperwave' | 'conn-tachyon' | 'conn-darkmatter';
 
 // Enhanced spaceship systems with real state
 export interface SpaceshipSystems {
@@ -34,6 +41,10 @@ export interface SpaceshipSystems {
   lifeSupport: boolean;
   engines: boolean;
   engineReady: boolean; // Engine power supply primed and ready for engagement
+  engineStarting: boolean; // Engine is currently in startup process
+  engineStartupProgress: number; // 0-100 during startup
+  engineStartupStartTime: number; // timestamp when startup began
+  starterDamage: number; // percentage chance of startup failure (0-100)
   navigation: boolean;
   shields: boolean;
   weapons: boolean;
@@ -50,7 +61,15 @@ export interface SpaceshipSystems {
   velocity: { x: number; y: number; z: number }; // velocity vector
   heading: number; // degrees, 0-360
   speed: number; // current speed in light years per hour
-  fuelLevel: number; // 0-100
+  fuelLevel: number; // 0-100 (legacy - now used for main fuel)
+  mainFuel: number; // 0-100
+  reserveFuel: number; // 0-100
+  boostFuel: number; // 0-100
+  emergencyFuel: number; // 0-100
+  coolantFuel: number; // 0-100
+  auxiliaryFuel: number; // 0-100
+  maneuverFuel: number; // 0-100
+  scramFuel: number; // 0-100
   reactorTemperature: number; // 0-1000 (degrees)
   shieldStrength: number; // 0-100
   weaponCharge: number; // 0-100
@@ -106,7 +125,8 @@ type GameAction =
   | { type: 'SAVE_STATE' }
   | { type: 'RESET_GAME' }
   | { type: 'SET_NAVIGATION_COMMAND'; activated: boolean }
-  | { type: 'ADD_NAVIGATION_COMMAND'; command: string };
+  | { type: 'ADD_NAVIGATION_COMMAND'; command: string }
+  | { type: 'CONSUME_FUEL'; amount: number };
 
 // Critical controls that must be on for spaceship to operate
 const CRITICAL_CONTROLS: ControlId[] = [
@@ -149,7 +169,14 @@ const initialState: GameState = {
     'engine-master': false, 'engine-pwr-1': false, 'engine-pwr-2': false,
     'engine-ready-1': false, 'engine-ready-2': false,
     // Navigation Console Controls (start at 0%)
-    'nav-thrust': 0, 'nav-vector': 0
+    'nav-thrust': 0, 'nav-vector': 0,
+    // Communications Console Controls
+    'comms-master': false, 'comms-pwr-1': false, 'comms-pwr-2': false,
+    // Outernet Connection Toggles (start OFF by default)
+    'conn-satellite': false, 'conn-radio': false, 'conn-laser': false, 'conn-quantum': false,
+    'conn-microwave': false, 'conn-infrared': false, 'conn-plasma': false, 'conn-neural': false,
+    'conn-gravitic': false, 'conn-psionic': false, 'conn-temporal': false, 'conn-dimensional': false,
+    'conn-subspace': false, 'conn-hyperwave': false, 'conn-tachyon': false, 'conn-darkmatter': false
   },
   systems: {
     power: false,
@@ -159,6 +186,10 @@ const initialState: GameState = {
     lifeSupport: false,
     engines: false,
     engineReady: false,
+    engineStarting: false,
+    engineStartupProgress: 0,
+    engineStartupStartTime: 0,
+    starterDamage: 30,
     navigation: false,
     shields: false,
     weapons: false,
@@ -176,6 +207,14 @@ const initialState: GameState = {
     heading: 0,
     speed: 0,
     fuelLevel: 100,
+    mainFuel: 100,
+    reserveFuel: 100,
+    boostFuel: 100,
+    emergencyFuel: 100,
+    coolantFuel: 100,
+    auxiliaryFuel: 100,
+    maneuverFuel: 100,
+    scramFuel: 100,
     reactorTemperature: 150,
     shieldStrength: 0,
     weaponCharge: 0,
@@ -591,6 +630,33 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       return {
         ...state,
         navigationCommandHistory: newHistory
+      };
+    }
+
+    case 'CONSUME_FUEL': {
+      const newSystems = { ...state.systems };
+      let amountLeft = action.amount;
+
+      // Consume fuel in order: main → reserve → boost → emergency → coolant → auxiliary → maneuver → scram
+      const fuelTanks = [
+        'mainFuel', 'reserveFuel', 'boostFuel', 'emergencyFuel',
+        'coolantFuel', 'auxiliaryFuel', 'maneuverFuel', 'scramFuel'
+      ] as const;
+
+      for (const tank of fuelTanks) {
+        if (amountLeft <= 0) break;
+
+        const currentFuel = newSystems[tank];
+        if (currentFuel > 0) {
+          const consumeAmount = Math.min(amountLeft, currentFuel);
+          newSystems[tank] = Math.max(0, currentFuel - consumeAmount);
+          amountLeft -= consumeAmount;
+        }
+      }
+
+      return {
+        ...state,
+        systems: newSystems
       };
     }
 

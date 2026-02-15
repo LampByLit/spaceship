@@ -10,6 +10,7 @@ import { SystemsMonitoring } from './components/SystemsMonitoring'
 import { NavigationConsole } from './components/consoles/NavigationConsole'
 import { Nav8Console } from './components/consoles/Nav8Console'
 import { Nav3Console } from './components/consoles/Nav3Console'
+import { Nav4Console } from './components/consoles/Nav4Console'
 import { useSoundEffects } from './hooks/useSoundEffects'
 
 const TOGGLE_LABELS = [
@@ -25,6 +26,51 @@ const TOGGLE_LABELS = [
 function AppContent() {
   const { state, dispatch } = useGameState()
   useSoundEffects()
+
+  // Keyboard navigation for consoles
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'PageUp' || event.key === 'PageDown') {
+        event.preventDefault()
+
+        const consoles = ['nav1', 'nav2', 'nav3', 'nav4', 'nav5', 'nav6', 'nav7', 'nav8'] as const
+        const currentIndex = consoles.indexOf(state.currentConsole)
+        let newIndex: number
+
+        if (event.key === 'PageUp') {
+          newIndex = currentIndex > 0 ? currentIndex - 1 : consoles.length - 1
+        } else { // PageDown
+          newIndex = currentIndex < consoles.length - 1 ? currentIndex + 1 : 0
+        }
+
+        const newConsole = consoles[newIndex]
+        // Map console index to footer toggle control (nav1 = f4, nav2 = f5, etc.)
+        const toggleControlId = `f${newIndex + 4}` as ControlId
+        dispatch({ type: 'TOGGLE_CONTROL', controlId: toggleControlId })
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [state.currentConsole, dispatch])
+
+  // Fuel consumption system (global - runs regardless of active console)
+  useEffect(() => {
+    let fuelConsumptionInterval: NodeJS.Timeout | null = null;
+
+    if (state.systems.engines) {
+      // Engine is online - start fuel consumption
+      fuelConsumptionInterval = setInterval(() => {
+        dispatch({ type: 'CONSUME_FUEL', amount: 0.1 });
+      }, 1000); // Consume 0.1% per second
+    }
+
+    return () => {
+      if (fuelConsumptionInterval) {
+        clearInterval(fuelConsumptionInterval);
+      }
+    };
+  }, [state.systems.engines, dispatch]);
 
   // Update spaceship systems based on control states
   useEffect(() => {
@@ -82,6 +128,20 @@ function AppContent() {
           timestamp: Date.now(),
           level: 'critical',
           message: 'ENGINES SHUTDOWN - Power supply disrupted, engines automatically disengaged',
+          source: 'Engine Power Supply'
+        }
+      })
+    }
+
+    // If spaceship power goes offline, automatically turn off engine master switch
+    if (!state.systems.power && state.controls['engine-master']) {
+      dispatch({ type: 'SET_CONTROL_VALUE', controlId: 'engine-master', value: 0 })
+      dispatch({
+        type: 'ADD_LOG',
+        log: {
+          timestamp: Date.now(),
+          level: 'warning',
+          message: 'ENGINE MASTER - Automatically disengaged due to power loss',
           source: 'Engine Power Supply'
         }
       })
@@ -151,8 +211,11 @@ function AppContent() {
     // Core systems are always online when spaceship has power (online or standby)
     dispatch({ type: 'SET_SYSTEM_STATUS', system: 'coreSystems', status: state.spaceshipOnline || state.spaceshipStandby })
 
-    // Communications activate with power + comms controls (using distribute as comms)
-    const commsOnline = powerOnline && state.controls['distribute']
+    // Communications activate with power + comms master + PWR.A + PWR.B
+    const commsPowerSupplyActive = state.controls['comms-master'] &&
+                                   state.controls['comms-pwr-1'] &&
+                                   state.controls['comms-pwr-2']
+    const commsOnline = powerOnline && commsPowerSupplyActive
     if (state.systems.communications !== commsOnline) {
       dispatch({
         type: 'ADD_LOG',
@@ -165,6 +228,20 @@ function AppContent() {
       })
     }
     dispatch({ type: 'SET_SYSTEM_STATUS', system: 'communications', status: commsOnline })
+
+    // Communications power supply logic - automatically turn off master switch if spaceship power goes offline
+    if (!powerOnline && state.controls['comms-master']) {
+      dispatch({ type: 'SET_CONTROL_VALUE', controlId: 'comms-master', value: 0 })
+      dispatch({
+        type: 'ADD_LOG',
+        log: {
+          timestamp: Date.now(),
+          level: 'warning',
+          message: 'COMMUNICATIONS MASTER - Automatically disengaged due to power loss',
+          source: 'Communications Power Supply'
+        }
+      })
+    }
 
     // Sensors activate with power + sensor controls (using monitor as sensors)
     const sensorsOnline = powerOnline && state.controls['monitor']
@@ -257,13 +334,15 @@ function AppContent() {
           <NavigationConsole />
         ) : state.currentConsole === 'nav3' ? (
           <Nav3Console />
+        ) : state.currentConsole === 'nav4' ? (
+          <Nav4Console />
         ) : state.currentConsole === 'nav8' ? (
           <Nav8Console />
         ) : (
           <>
             {/* Left cluster */}
             <section className="control-cluster cluster-left">
-              <div className="cluster-title">POWER & GAIN</div>
+              <div className="cluster-title">MAIN POWER SUPPLY</div>
               <div className="power-buttons-grid">
                 <div className="primary-power-buttons">
                   <div style={{ transform: 'scale(1.6)', transformOrigin: 'center', marginBottom: '40px' }}>
@@ -327,16 +406,22 @@ function AppContent() {
                   ENGINES: <span className={
                     state.systems.engines ? "status-good" :
                     state.systems.engineReady ? "status-caution" :
-                    "status-caution"
+                    "status-offline"
                   }>
                     {state.systems.engines ? "ONLINE" :
-                     state.systems.engineReady ? "READY" :
-                     "STANDBY"}
+                     state.systems.engineReady ? "STANDBY" :
+                     "OFFLINE"}
                   </span>
                 </div>
                 <div className="readout-line">
-                  PROPULSION: <span className={state.systems.propulsion ? "status-good" : "status-caution"}>
-                    {state.systems.propulsion ? "ENGAGED" : "STANDBY"}
+                  PROPULSION: <span className={
+                    state.systems.propulsion ? "status-good" :
+                    !state.systems.engines ? "status-offline" :
+                    "status-caution"
+                  }>
+                    {state.systems.propulsion ? "ENGAGED" :
+                     !state.systems.engines ? "OFFLINE" :
+                     "STANDBY"}
                   </span>
                 </div>
                 <div className="readout-line">
@@ -433,9 +518,11 @@ function AppContent() {
       {/* Bottom strip - more toggles */}
       <footer className="panel-footer">
         <div className="footer-toggle-strip">
+          <span className="keyboard-hint">PgUp</span>
           {['SAFE', 'ARM', 'LOCK', 'KEY', 'NAV.1', 'NAV.2', 'NAV.3', 'NAV.4', 'NAV.5', 'NAV.6', 'NAV.7', 'NAV.8', 'EMERGENCY', 'ABORT'].map((l, i) => (
             <JellyfishToggle key={`f${i}`} id={`f${i}`} label={l} />
           ))}
+          <span className="keyboard-hint">PgDn</span>
         </div>
       </footer>
     </div>

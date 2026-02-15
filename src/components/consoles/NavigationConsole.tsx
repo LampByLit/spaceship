@@ -94,40 +94,6 @@ export function NavigationConsole() {
             source: 'Navigation Console'
           }
         })
-      } else if (command === 'engage') {
-        if (state.systems.engineReady) {
-          dispatch({ type: 'SET_SYSTEM_STATUS', system: 'engines', status: true })
-          dispatch({
-            type: 'ADD_LOG',
-            log: {
-              timestamp: Date.now(),
-              level: 'system',
-              message: 'ENGINES ENGAGED - Propulsion systems online and ready for thrust commands',
-              source: 'Navigation Console'
-            }
-          })
-        } else {
-          dispatch({
-            type: 'ADD_LOG',
-            log: {
-              timestamp: Date.now(),
-              level: 'critical',
-              message: 'ENGAGE FAILED - Engine power supply not primed. Check NAV3 console for power supply status.',
-              source: 'Navigation Console'
-            }
-          })
-        }
-      } else if (command === 'disengage') {
-        dispatch({ type: 'SET_SYSTEM_STATUS', system: 'engines', status: false })
-        dispatch({
-          type: 'ADD_LOG',
-          log: {
-            timestamp: Date.now(),
-            level: 'warning',
-            message: 'ENGINES DISENGAGED - Propulsion systems offline',
-            source: 'Navigation Console'
-          }
-        })
       } else {
         // Unknown command feedback
         dispatch({

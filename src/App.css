@@ -948,6 +948,100 @@
     inset 0 0 8px rgba(69, 191, 104, 0.3);
 }
 
+/* ===== Spring Toggle (momentary toggle switches) ===== */
+.spring-toggle-station {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.spring-toggle-station.disabled .spring-toggle {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.spring-toggle-station.disabled .spring-toggle__lever {
+  background: #666;
+}
+
+.spring-toggle {
+  background: linear-gradient(135deg, #1a1f22 0%, #0d0f11 100%);
+  border: 1px solid #2a3035;
+  border-radius: 4px;
+  width: 3.5em;
+  height: 2em;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+  box-shadow:
+    0 2px 4px rgba(0,0,0,0.5),
+    inset 0 1px 2px rgba(255,255,255,0.1);
+  overflow: hidden;
+}
+
+.spring-toggle:hover {
+  box-shadow:
+    0 4px 8px rgba(0,0,0,0.6),
+    inset 0 1px 2px rgba(255,255,255,0.1);
+}
+
+.spring-toggle.pressed .spring-toggle__lever {
+  transform: translateX(1.5em);
+}
+
+.spring-toggle-green {
+  background: linear-gradient(135deg, #1a2a1e 0%, #0d1a0d 100%);
+  border-color: #45bf6855;
+}
+
+.spring-toggle-green:hover {
+  border-color: #45bf6888;
+}
+
+.spring-toggle-green .spring-toggle__lever {
+  background: linear-gradient(135deg, #45bf68, #2d8030);
+}
+
+.spring-toggle-red {
+  background: linear-gradient(135deg, #2a1a1a 0%, #1a0d0d 100%);
+  border-color: #bf454555;
+}
+
+.spring-toggle-red:hover {
+  border-color: #bf454588;
+}
+
+.spring-toggle-red .spring-toggle__lever {
+  background: linear-gradient(135deg, #bf4545, #8b2d2d);
+}
+
+.spring-toggle__lever {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 1.2em;
+  height: 1.6em;
+  background: linear-gradient(135deg, #666, #444);
+  border-radius: 2px;
+  transition: transform 0.2s ease;
+  box-shadow:
+    0 1px 2px rgba(0,0,0,0.5),
+    inset 0 0 4px rgba(255,255,255,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Press Start 2P", cursive;
+}
+
+.spring-toggle__lever::before {
+  font-size: 5px;
+  font-weight: bold;
+  text-align: center;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
 /* ===== Systems Monitoring Minigame ===== */
 .systems-monitoring {
   display: flex;
@@ -1279,6 +1373,13 @@
   box-shadow: inset 0 0 8px rgba(0,0,0,0.8);
 }
 
+.comms-indicator .indicator-light-large .light {
+  width: 120px;
+  height: 120px;
+  border: 6px solid #333;
+  box-shadow: inset 0 0 12px rgba(0,0,0,0.8);
+}
+
 .indicator-light-large .light.active {
   box-shadow: 0 0 16px currentColor, inset 0 0 16px rgba(255,255,255,0.3);
 }
@@ -1314,6 +1415,172 @@
   background: radial-gradient(circle, #ffaa44, #cc7700);
 }
 
+.light.flashing-amber {
+  color: #f59e0b;
+  animation: flash 0.5s infinite alternate;
+}
+
+.light.blinking-green {
+  color: #45bf68;
+  animation: blink-slow 2.5s infinite alternate;
+}
+
+@keyframes flash {
+  0% { opacity: 0.3; }
+  100% { opacity: 1; }
+}
+
+@keyframes blink-slow {
+  0% { opacity: 0.2; }
+  100% { opacity: 1; }
+}
+
+/* Outernet Connection Panel Styles */
+.outernet-connection-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 15px;
+}
+
+.signal-strength-section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.signal-strength-screen {
+  background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+  border: 3px solid #666;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow:
+    inset 0 0 10px rgba(0, 0, 0, 0.5);
+  position: relative;
+  transition: all 0.5s ease;
+}
+
+.signal-strength-screen.active {
+  background: linear-gradient(145deg, #1a1a2e, #16213e);
+  border: 3px solid #00d4ff;
+  box-shadow:
+    inset 0 0 20px rgba(0, 212, 255, 0.3),
+    0 0 20px rgba(0, 212, 255, 0.2);
+}
+
+.signal-strength-screen.active::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, #00d4ff, #00ff88, #ff0080, #8000ff);
+  border-radius: 8px;
+  z-index: -1;
+  opacity: 0.3;
+}
+
+.signal-strength-bars {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.signal-bar-label {
+  font-family: "Press Start 2P", cursive;
+  font-size: 8px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-align: center;
+  transition: all 0.5s ease;
+}
+
+.signal-strength-screen.active .signal-bar-label {
+  color: #00d4ff;
+  text-shadow: 0 0 8px #00d4ff;
+}
+
+.signal-bars {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  padding: 10px;
+}
+
+.signal-bar {
+  width: 24px;
+  background: linear-gradient(180deg, #666, #444);
+  border: 2px solid #777;
+  border-radius: 2px;
+  transition: all 0.4s ease;
+  box-shadow: inset 0 0 4px rgba(0,0,0,0.8);
+  opacity: 0.4;
+}
+
+.signal-bar.strength-1 {
+  height: 20px;
+}
+
+.signal-bar.strength-2 {
+  height: 40px;
+}
+
+.signal-bar.strength-3 {
+  height: 60px;
+}
+
+.signal-bar.strength-4 {
+  height: 80px;
+}
+
+.signal-bar.strength-5 {
+  height: 100px;
+}
+
+.signal-bar.active {
+  background: linear-gradient(180deg, #00ff88, #00d4ff, #2d7d3d);
+  box-shadow:
+    0 0 15px #00ff88,
+    inset 0 0 8px rgba(0, 255, 136, 0.4);
+  border-color: #00ff88;
+  opacity: 1;
+  animation: signal-pulse 2s ease-in-out infinite;
+}
+
+@keyframes signal-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0 15px #00ff88,
+      inset 0 0 8px rgba(0, 255, 136, 0.4);
+  }
+  50% {
+    box-shadow:
+      0 0 25px #00ff88,
+      0 0 35px #00d4ff,
+      inset 0 0 12px rgba(0, 255, 136, 0.6);
+  }
+}
+
+.connection-types-section {
+  flex: 1;
+}
+
+.connection-types-table {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.connection-row {
+  display: flex;
+  gap: 8px;
+  justify-content: space-around;
+  padding: 4px 0;
+}
+
 .light.green {
   color: #45bf68;
 }
@@ -1336,6 +1603,23 @@
 
 .engine-indicator.amber .indicator-text {
   color: #f59e0b;
+}
+
+.engine-control-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+.engine-toggles {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.8);
+  border-radius: 8px;
+  border: 2px solid #2a3035;
 }
 
 .master-switch-section {
@@ -1418,8 +1702,8 @@
 }
 
 .fuel-metrics {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 12px;
   flex: 1;
 }
@@ -1430,6 +1714,8 @@
   gap: 4px;
   padding: 8px;
   background: rgba(0, 0, 0, 0.5);
+  position: relative;
+  min-height: 80px;
   border-radius: 4px;
   border: 1px solid #2a3035;
 }
@@ -1463,12 +1749,230 @@
   background: linear-gradient(90deg, #fbbf24 0%, #d97706 100%);
 }
 
+.gauge-fill.boost {
+  background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
+}
+
+.gauge-fill.emergency {
+  background: linear-gradient(90deg, #f97316 0%, #ea580c 100%);
+}
+
+.gauge-fill.coolant {
+  background: linear-gradient(90deg, #06b6d4 0%, #0891b2 100%);
+}
+
+.gauge-fill.auxiliary {
+  background: linear-gradient(90deg, #a855f7 0%, #9333ea 100%);
+}
+
+.gauge-fill.maneuver {
+  background: linear-gradient(90deg, #84cc16 0%, #65a30d 100%);
+}
+
+.gauge-fill.scram {
+  background: linear-gradient(90deg, #ec4899 0%, #db2777 100%);
+}
+
 .gauge-value {
   font-family: "Press Start 2P", cursive;
   font-size: 6px;
   color: #45bf68;
   text-align: center;
   text-shadow: 0 0 4px #45bf68;
+}
+
+.fuel-type {
+  font-family: "Press Start 2P", cursive;
+  font-size: 4px;
+  color: #888;
+  text-align: center;
+  margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.usage-arrow {
+  font-family: "Press Start 2P", cursive;
+  font-size: 24px;
+  color: #45bf68;
+  text-align: center;
+  margin-top: 8px;
+  text-shadow: 0 0 12px #45bf68, 0 0 24px #45bf68;
+  font-weight: bold;
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+}
+
+.usage-arrow.usage-consumption {
+  color: #f59e0b;
+  text-shadow: 0 0 12px #f59e0b, 0 0 24px #f59e0b;
+}
+
+/* ===== Reactor Observation Panel ===== */
+.reactor-observation-panel {
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  gap: 16px;
+}
+
+.reactor-grid {
+  display: grid;
+  grid-template-rows: repeat(3, 1fr);
+  gap: 4px;
+  height: 100%;
+}
+
+.grid-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 4px;
+}
+
+.grid-cell {
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid #2a3035;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  font-family: "Press Start 2P", cursive;
+  font-size: 7px;
+  color: #888;
+  text-transform: uppercase;
+  text-align: center;
+  min-height: 32px;
+}
+
+.grid-cell:nth-child(1) {
+  background: rgba(0, 0, 0, 0.9);
+  color: #45bf68;
+  font-weight: bold;
+  font-size: 6px;
+}
+
+.grid-cell:nth-child(2) {
+  background: rgba(15, 23, 42, 0.9);
+  color: #60a5fa;
+  font-size: 8px;
+}
+
+.grid-cell:nth-child(3) {
+  background: rgba(0, 0, 0, 0.7);
+  color: #f59e0b;
+  font-weight: bold;
+  font-size: 6px;
+}
+
+/* Status color overrides */
+.grid-cell.status-critical {
+  color: #ef4444 !important;
+  text-shadow: 0 0 6px #ef4444;
+}
+
+.grid-cell.status-warning {
+  color: #f59e0b !important;
+  text-shadow: 0 0 6px #f59e0b;
+}
+
+.grid-cell.status-normal {
+  color: #45bf68 !important;
+  text-shadow: 0 0 6px #45bf68;
+}
+
+.grid-cell.status-active {
+  color: #45bf68 !important;
+  text-shadow: 0 0 6px #45bf68;
+}
+
+.grid-cell.status-standby {
+  color: #f59e0b !important;
+  text-shadow: 0 0 6px #f59e0b;
+}
+
+/* ===== Reactor Core Grid ===== */
+.reactor-core-grid {
+  display: grid;
+  grid-template-rows: repeat(3, 1fr);
+  gap: 3px;
+  margin-top: 8px;
+}
+
+.core-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3px;
+}
+
+.core-cell {
+  background: rgba(30, 30, 30, 0.9);
+  border: 2px solid #444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Press Start 2P", cursive;
+  font-size: 12px;
+  font-weight: bold;
+  color: #666;
+  aspect-ratio: 1;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.core-cell::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  right: 2px;
+  bottom: 2px;
+  background: inherit;
+  border-radius: 2px;
+  opacity: 0.8;
+}
+
+/* Core states */
+.core-cell.core-inactive {
+  background: linear-gradient(135deg, #333 0%, #222 100%);
+  border-color: #444;
+  color: #666;
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+}
+
+.core-cell.core-active {
+  background: linear-gradient(135deg, #45bf68 0%, #2d8030 100%);
+  border-color: #45bf68;
+  color: #000;
+  box-shadow:
+    0 0 15px rgba(69, 191, 104, 0.6),
+    inset 0 0 15px rgba(69, 191, 104, 0.3);
+}
+
+.core-cell.core-warning {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  border-color: #f59e0b;
+  color: #000;
+  box-shadow:
+    0 0 15px rgba(245, 158, 11, 0.6),
+    inset 0 0 15px rgba(245, 158, 11, 0.3);
+}
+
+.core-cell.core-critical {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  border-color: #ef4444;
+  color: #fff;
+  box-shadow:
+    0 0 20px rgba(239, 68, 68, 0.8),
+    inset 0 0 20px rgba(239, 68, 68, 0.4);
+  animation: core-pulse 1s infinite alternate;
+}
+
+@keyframes core-pulse {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.05); }
 }
 
 .fuel-efficiency {
@@ -1662,10 +2166,22 @@
   flex-wrap: wrap;
   justify-content: center;
   gap: 12px;
+  align-items: center;
 }
 
 .footer-toggle-strip .jellyfish-toggle-station {
   flex-direction: row;
+}
+
+.keyboard-hint {
+  font-family: "Press Start 2P", cursive;
+  font-size: 5px;
+  color: #45bf68aa;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  opacity: 0.8;
+  margin: 0 4px;
 }
 
 /* ===== Custom Sci-Fi Scrollbar for Logs ===== */
