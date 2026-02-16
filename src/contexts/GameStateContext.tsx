@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useReducer, ReactNode } from 'react';
+import { soundEffects } from '../utils/soundUtils';
 
 // Define all control types
 export type ControlId =
@@ -189,7 +190,7 @@ const initialState: GameState = {
     engineStarting: false,
     engineStartupProgress: 0,
     engineStartupStartTime: 0,
-    starterDamage: 30,
+    starterDamage: 50,
     navigation: false,
     shields: false,
     weapons: false,
@@ -884,6 +885,54 @@ function loadStateFromStorage(): GameState {
 export function GameStateProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(gameReducer, loadStateFromStorage());
 
+  // Custom dispatch that can trigger sound effects
+  const enhancedDispatch = (action: GameAction) => {
+    // Play sound effects based on actions
+    if (action.type === 'TOGGLE_CONTROL' && (
+      action.controlId === 'master-toggle' ||
+      action.controlId === 'engine-master' ||
+      action.controlId === 'comms-master'
+    )) {
+      soundEffects.playMasterPowerSound();
+    } else if (action.type === 'TOGGLE_CONTROL' && (
+      // Main power buttons (primary/secondary reactors)
+      action.controlId === 'pwr-1' ||
+      action.controlId === 'pwr-2'
+    )) {
+      soundEffects.playMainPowerSound();
+    } else if (action.type === 'TOGGLE_CONTROL' && (
+      // Backup/auxiliary power buttons
+      action.controlId === 'pwr-5' ||
+      action.controlId === 'pwr-6' ||
+      action.controlId === 'pwr-7' ||
+      action.controlId === 'pwr-8' ||
+      action.controlId === 'pwr-9' ||
+      action.controlId === 'pwr-10'
+    )) {
+      soundEffects.playBackupPowerSound();
+    } else if (action.type === 'TOGGLE_CONTROL' && (
+      action.controlId === 'engine-pwr-1' ||
+      action.controlId === 'engine-pwr-2' ||
+      action.controlId === 'engine-ready-1' ||
+      action.controlId === 'engine-ready-2' ||
+      action.controlId === 'comms-pwr-1' ||
+      action.controlId === 'comms-pwr-2' ||
+      // Battery control toggles
+      action.controlId === 'config-1' ||
+      action.controlId === 'config-2' ||
+      action.controlId === 'config-3' ||
+      action.controlId === 'config-4' ||
+      action.controlId === 'charge-mode' ||
+      // Footer toggles (f0-f13)
+      action.controlId.startsWith('f') && parseInt(action.controlId.slice(1)) >= 0 && parseInt(action.controlId.slice(1)) <= 13
+    )) {
+      soundEffects.playConsolePowerSound();
+    }
+
+    // Dispatch the action
+    dispatch(action);
+  };
+
   // Auto-save state periodically and on changes
   React.useEffect(() => {
     const saveInterval = setInterval(() => {
@@ -904,7 +953,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <GameStateContext.Provider value={{ state, dispatch }}>
+    <GameStateContext.Provider value={{ state, dispatch: enhancedDispatch }}>
       {children}
     </GameStateContext.Provider>
   );

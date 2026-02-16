@@ -1,11 +1,12 @@
 import { useGameState } from '../../contexts/GameStateContext'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { PowerButton } from '../PowerButton'
 import { JellyfishToggle } from '../JellyfishToggle'
 import { SpringToggle } from '../SpringToggle'
 
 export function Nav4Console() {
   const { state, dispatch } = useGameState()
+  const prevPowerStateRef = useRef<boolean>(false)
 
   // Communications Power Supply Logic
   const isCommsMasterOn = state.controls['comms-master']
@@ -17,6 +18,10 @@ export function Nav4Console() {
                        state.controls['comms-pwr-1'] &&
                        state.controls['comms-pwr-2']
 
+  // Connection toggles are disabled when communications system power is off
+  const areConnectionTogglesDisabled = !isCommsMasterOn || !isSpaceshipPowerOnline ||
+                                       !state.controls['comms-pwr-1'] || !state.controls['comms-pwr-2']
+
   // Connection toggles list
   const connectionToggles = [
     'conn-radio', 'conn-satellite', 'conn-microwave', 'conn-infrared',
@@ -25,15 +30,30 @@ export function Nav4Console() {
     'conn-subspace', 'conn-hyperwave', 'conn-tachyon', 'conn-darkmatter'
   ]
 
-  // Automatically control connection toggles based on communications system state
+  // Automatically control connection toggles based on communications system power state
   useEffect(() => {
-    connectionToggles.forEach(toggleId => {
-      const shouldBeOn = isCommsOnline
-      if (state.controls[toggleId] !== shouldBeOn) {
-        dispatch({ type: 'SET_CONTROL_VALUE', controlId: toggleId, value: shouldBeOn })
-      }
-    })
-  }, [isCommsOnline, state.controls, dispatch])
+    const currentPowerState = !areConnectionTogglesDisabled
+
+    // When power goes from off to on, turn all toggles on
+    if (currentPowerState && !prevPowerStateRef.current) {
+      connectionToggles.forEach(toggleId => {
+        if (!state.controls[toggleId]) {
+          dispatch({ type: 'SET_CONTROL_VALUE', controlId: toggleId, value: true })
+        }
+      })
+    }
+    // When power goes from on to off, turn all toggles off
+    else if (!currentPowerState && prevPowerStateRef.current) {
+      connectionToggles.forEach(toggleId => {
+        if (state.controls[toggleId]) {
+          dispatch({ type: 'SET_CONTROL_VALUE', controlId: toggleId, value: false })
+        }
+      })
+    }
+
+    // Update the ref to track the current power state
+    prevPowerStateRef.current = currentPowerState
+  }, [areConnectionTogglesDisabled, dispatch])
 
   // Signal strength is full when communications are online (all toggles active)
   const signalStrength = isCommsOnline ? 5 : 0
@@ -109,28 +129,28 @@ export function Nav4Console() {
           <div className="connection-types-section">
             <div className="connection-types-table">
               <div className="connection-row">
-                <JellyfishToggle key="conn-radio" id="conn-radio" label="RADIO" />
-                <JellyfishToggle key="conn-satellite" id="conn-satellite" label="SATELLITE" />
-                <JellyfishToggle key="conn-microwave" id="conn-microwave" label="MICROWAVE" />
-                <JellyfishToggle key="conn-infrared" id="conn-infrared" label="INFRARED" />
+                <JellyfishToggle key="conn-radio" id="conn-radio" label="RADIO" disabled={areConnectionTogglesDisabled} />
+                <JellyfishToggle key="conn-satellite" id="conn-satellite" label="SATELLITE" disabled={areConnectionTogglesDisabled} />
+                <JellyfishToggle key="conn-microwave" id="conn-microwave" label="MICROWAVE" disabled={areConnectionTogglesDisabled} />
+                <JellyfishToggle key="conn-infrared" id="conn-infrared" label="INFRARED" disabled={areConnectionTogglesDisabled} />
               </div>
               <div className="connection-row">
-                <JellyfishToggle key="conn-laser" id="conn-laser" label="LASER" />
-                <JellyfishToggle key="conn-plasma" id="conn-plasma" label="PLASMA" />
-                <JellyfishToggle key="conn-quantum" id="conn-quantum" label="QUANTUM" />
-                <JellyfishToggle key="conn-neural" id="conn-neural" label="NEURAL" />
+                <JellyfishToggle key="conn-laser" id="conn-laser" label="LASER" disabled={areConnectionTogglesDisabled} />
+                <JellyfishToggle key="conn-plasma" id="conn-plasma" label="PLASMA" disabled={areConnectionTogglesDisabled} />
+                <JellyfishToggle key="conn-quantum" id="conn-quantum" label="QUANTUM" disabled={areConnectionTogglesDisabled} />
+                <JellyfishToggle key="conn-neural" id="conn-neural" label="NEURAL" disabled={areConnectionTogglesDisabled} />
               </div>
               <div className="connection-row">
-                <JellyfishToggle key="conn-psionic" id="conn-psionic" label="PSIONIC" />
-                <JellyfishToggle key="conn-gravitic" id="conn-gravitic" label="GRAVITIC" />
-                <JellyfishToggle key="conn-temporal" id="conn-temporal" label="TEMPORAL" />
-                <JellyfishToggle key="conn-dimensional" id="conn-dimensional" label="DIMENSIONAL" />
+                <JellyfishToggle key="conn-psionic" id="conn-psionic" label="PSIONIC" disabled={areConnectionTogglesDisabled} />
+                <JellyfishToggle key="conn-gravitic" id="conn-gravitic" label="GRAVITIC" disabled={areConnectionTogglesDisabled} />
+                <JellyfishToggle key="conn-temporal" id="conn-temporal" label="TEMPORAL" disabled={areConnectionTogglesDisabled} />
+                <JellyfishToggle key="conn-dimensional" id="conn-dimensional" label="DIMENSIONAL" disabled={areConnectionTogglesDisabled} />
               </div>
               <div className="connection-row">
-                <JellyfishToggle key="conn-subspace" id="conn-subspace" label="SUBSPACE" />
-                <JellyfishToggle key="conn-hyperwave" id="conn-hyperwave" label="HYPERWAVE" />
-                <JellyfishToggle key="conn-tachyon" id="conn-tachyon" label="TACHYON" />
-                <JellyfishToggle key="conn-darkmatter" id="conn-darkmatter" label="DARK MATTER" />
+                <JellyfishToggle key="conn-subspace" id="conn-subspace" label="SUBSPACE" disabled={areConnectionTogglesDisabled} />
+                <JellyfishToggle key="conn-hyperwave" id="conn-hyperwave" label="HYPERWAVE" disabled={areConnectionTogglesDisabled} />
+                <JellyfishToggle key="conn-tachyon" id="conn-tachyon" label="TACHYON" disabled={areConnectionTogglesDisabled} />
+                <JellyfishToggle key="conn-darkmatter" id="conn-darkmatter" label="DARK MATTER" disabled={areConnectionTogglesDisabled} />
               </div>
             </div>
           </div>

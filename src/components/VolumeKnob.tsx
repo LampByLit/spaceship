@@ -21,7 +21,7 @@ export function VolumeKnob({ id, label, size = 120 }: VolumeKnobProps) {
   const withoutAnimateRef = useRef(false)
 
   const setValueState = useCallback((v: number) => {
-    dispatch({ type: 'SET_CONTROL_VALUE', controlId: id as any, value: v })
+    // Update visual elements based on the angle value
     if (sliderRef.current) sliderRef.current.style.setProperty('--deg', `${v}deg`)
     if (sliderShadowRef.current) sliderShadowRef.current.style.setProperty('--deg', `${v}deg`)
     if (sliderRef.current) sliderRef.current.style.setProperty('--h', `${v * 1 + DEG_RANGE * 2}`)
@@ -30,7 +30,7 @@ export function VolumeKnob({ id, label, size = 120 }: VolumeKnobProps) {
         l.classList.toggle('active', parseFloat(l.dataset.deg ?? '0') <= v)
       })
     }
-  }, [dispatch, id])
+  }, [])
 
   const setByCoords = useCallback((clientX: number, clientY: number) => {
     const rect = containerRef.current?.getBoundingClientRect()
@@ -46,16 +46,10 @@ export function VolumeKnob({ id, label, size = 120 }: VolumeKnobProps) {
     let val = res <= 180 ? res : res - 360
     val = Math.max(-DEG_RANGE, Math.min(DEG_RANGE, val))
 
-    // Map knob rotation to percentage:
-    // val = 0° (top) = 100%
-    // val = ±135° (bottom) = 0%
-    // Use absolute value so both bottom positions = 0%
-    const percentage = Math.round(100 - (Math.abs(val) / DEG_RANGE) * 100)
-
-    // Update both local visual state and global game state in real-time
-    setValueState(val)
-    dispatch({ type: 'SET_CONTROL_VALUE', controlId: id as any, value: percentage })
-  }, [setValueState, dispatch, id])
+    // Store the angle directly in the global state (not percentage)
+    // This keeps the visual rotation and stored value in sync
+    dispatch({ type: 'SET_CONTROL_VALUE', controlId: id as any, value: val })
+  }, [dispatch, id])
 
   useEffect(() => {
     const gradateGroup = gradateRef.current
@@ -66,8 +60,12 @@ export function VolumeKnob({ id, label, size = 120 }: VolumeKnobProps) {
       html += `<line data-deg="${i}" style="--deg: ${i}deg; --h: ${i + DEG_RANGE * 2}" x1="300" y1="30" x2="300" y2="70" />`
     }
     gradateGroup.innerHTML = html
-    setValueState(-DEG_RANGE)
-  }, [id, setValueState])
+  }, [])
+
+  // Sync visual state with stored value whenever it changes
+  useEffect(() => {
+    setValueState(value)
+  }, [value, setValueState])
 
   // Set up slider event handlers
   useEffect(() => {

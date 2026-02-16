@@ -3,8 +3,8 @@ import { useGameState } from '../contexts/GameStateContext'
 export function KingConsole() {
   const { state, dispatch } = useGameState()
 
-  // Check if all footer toggles (SAFE, ARM, LOCK, KEY) are on
-  const footerTogglesPrimed = state.controls['f0'] && state.controls['f1'] && state.controls['f2'] && state.controls['f3']
+  // Check if footer toggles (SAFE, ARM, LOCK) are on (excluding KEY)
+  const footerTogglesPrimed = state.controls['f0'] && state.controls['f1'] && state.controls['f2']
 
   const borderColor = state.spaceshipOnline ? '#45bf68' : (state.spaceshipStandby ? '#ffa500' : '#ef4444')
 
@@ -39,11 +39,10 @@ export function KingConsole() {
         SPACESHIP: {state.spaceshipOnline ? 'ONLINE' : (state.spaceshipStandby ? 'STANDBY' : 'OFFLINE')}
       </div>
       <button onClick={() => {
-        // Only toggle on footer toggles if they're off (prime them)
+        // Only toggle on footer toggles if they're off (prime them) - excluding KEY
         if (!state.controls['f0']) dispatch({ type: 'TOGGLE_CONTROL', controlId: 'f0' })
         if (!state.controls['f1']) dispatch({ type: 'TOGGLE_CONTROL', controlId: 'f1' })
         if (!state.controls['f2']) dispatch({ type: 'TOGGLE_CONTROL', controlId: 'f2' })
-        if (!state.controls['f3']) dispatch({ type: 'TOGGLE_CONTROL', controlId: 'f3' })
       }} style={{
         fontSize: '6px',
         padding: '2px 4px',

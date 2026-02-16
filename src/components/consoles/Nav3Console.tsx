@@ -8,7 +8,6 @@ import { useSoundEffects } from '../../hooks/useSoundEffects'
 
 export function Nav3Console() {
   const { state, dispatch } = useGameState()
-  const { playEngineStartupSound } = useSoundEffects()
 
   // Engine performance states
   const [thrustLevel, setThrustLevel] = useState(0)
@@ -53,17 +52,20 @@ export function Nav3Console() {
         const elapsed = now - startTime;
         const progress = Math.min((elapsed / duration) * 100, 100);
 
+
         dispatch({ type: 'SET_SYSTEM_STATUS', system: 'engineStartupProgress', status: progress });
 
         if (now >= endTime) {
           // Startup complete - check for failure
           const failureChance = state.systems.starterDamage / 100;
-          const failed = Math.random() < failureChance;
+          const randomValue = Math.random();
+          const failed = randomValue < failureChance;
 
           if (failed) {
-            // Engine startup failed - reset ready toggles
+            // Engine startup failed - reset ready toggles and engine ready status
             dispatch({ type: 'SET_SYSTEM_STATUS', system: 'engineStarting', status: false });
             dispatch({ type: 'SET_SYSTEM_STATUS', system: 'engineStartupProgress', status: 0 });
+            dispatch({ type: 'SET_SYSTEM_STATUS', system: 'engineReady', status: false });
             dispatch({ type: 'SET_CONTROL_VALUE', controlId: 'engine-ready-1', value: 0 }); // Turn off ready 1
             dispatch({ type: 'SET_CONTROL_VALUE', controlId: 'engine-ready-2', value: 0 }); // Turn off ready 2
             dispatch({
@@ -98,7 +100,7 @@ export function Nav3Console() {
 
       updateProgress();
     }
-  }, [state.systems.engineStarting, state.systems.engineStartupStartTime, state.systems.starterDamage, dispatch]);
+  }, [state.systems.engineStarting, state.systems.engineStartupStartTime, state.systems.starterDamage]);
 
   const isEnginesOnline = state.systems.engines
   const isPropulsionOnline = state.systems.propulsion
@@ -162,7 +164,7 @@ export function Nav3Console() {
         clearInterval(temperatureInterval);
       }
     };
-  }, [state.systems.power, state.systems.engineReady, state.systems.engineStarting, state.systems.engines, state.systems.reactorTemperature, dispatch]);
+  }, [state.systems.power, state.systems.engineReady, state.systems.engineStarting, state.systems.engines, state.systems.reactorTemperature]);
 
   const handleCommandSubmit = (e: React.FormEvent) => {
     e.preventDefault()
